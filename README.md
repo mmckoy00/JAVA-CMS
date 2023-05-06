@@ -6,7 +6,7 @@ Java-CMS is a Swing-based Java application for capturing student complaints, all
 
 ## Getting Started
 
-To use the application, you will need to clone the repository and start the server located in the `JAVA-CMS/ServerApp/src/server` directory. Then, open the `JAVA-CMS/ClientApp/src/frames/MainFrame.java` file to launch the application.
+To use the application, you will need to clone the repository and start the server located in the `JAVA-CMS/ServerApp/src/server/Server.java` directory. Then, open the `JAVA-CMS/ClientApp/src/frames/MainFrame.java` file to launch the application.
 
 ## Usage
 
