@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.HashSet;
+import java.util.Set;
 
 import entities.User;
 import frames.MainFrame;
@@ -15,7 +17,7 @@ public class Client {
 	ObjectInputStream in = null;
 	Socket server = null;
 	MainFrame mainFrame = null;
-
+	
 	
 	public Client(MainFrame mainFrame) {
 		this.mainFrame = mainFrame;
@@ -58,10 +60,10 @@ public class Client {
 		}
 	}
 	
-	public User authenticationResponse() {
-		User result = null;
+	public Object authenticationResponse() {
+		Object result = null;
 		try {
-			result = (User)in.readObject();
+			result = (Object) in.readObject();
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -70,7 +72,7 @@ public class Client {
 			e.printStackTrace();
 		}
 		
-	return result;
+		return result;
 	}
 	
 	
