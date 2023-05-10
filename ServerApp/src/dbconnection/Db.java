@@ -7,9 +7,9 @@ import org.apache.commons.dbcp2.BasicDataSource;
 
 public class Db {
 	
-	private static BasicDataSource ds = new BasicDataSource();
+	private BasicDataSource ds =  new BasicDataSource();
 	
-	static {
+	{
 		ds.setUrl("jdbc:mysql://localhost:3306/demo"); 
 		ds.setUsername("root");
 		ds.setPassword("@7235Ma@@");
@@ -20,11 +20,11 @@ public class Db {
 	}
 	
 	
-	public static Connection getConnection() throws SQLException {
+	public Connection getConnection() throws SQLException {
 		return ds.getConnection();
 	}
 	
-	public static void closeConnection() throws SQLException {
+	public void closeConnection() throws SQLException {
 		ds.close();
 	}
 	
