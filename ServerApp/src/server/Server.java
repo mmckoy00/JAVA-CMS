@@ -9,6 +9,9 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.sql.Date;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import dbconnection.Db;
@@ -55,14 +58,14 @@ public class Server {
 }
 
 
-
+//handles user requests
 class ClientHandler implements Runnable{
 	Socket client = null;
 	ObjectOutputStream out = null;
 	ObjectInputStream in = null;
 	int clientCount = 0;
-	java.util.Map<String, Integer> clients = new java.util.HashMap<String, Integer>();
-	
+	Db db = new Db();
+	static Set<String> online = new HashSet<String>(); 
 	
 	public ClientHandler(Socket socket, int clientCount) {
 		this.client = socket;
@@ -81,34 +84,34 @@ class ClientHandler implements Runnable{
 					
 					while(!action.equalsIgnoreCase("logout")) {	
 						
-						action = (String) in.readObject();
+					    action = (String) in.readObject();
 						
 						if(action.equalsIgnoreCase("login")) {
 							User user = null;
 							String id = (String) in.readObject();
 							String password = (String) in.readObject();
-							
 							user = authenticateUser(id, password);
-							
+							if(user!=null) {
+								if(!online.contains(user.getUsername())) {
+									online.add(user.getUsername());
+									out.writeObject(user);
+								}else {
+									out.writeObject("is logged in");	
+								}
+						}else {
 							out.writeObject(user);	
 						}
+					  }
 						
-						
-						
-						if(action.equalsIgnoreCase("Edit Profile")) {
-							
+						if(action.equalsIgnoreCase("Edit Profile")) {	
 						}
 						
-						
-						if(action.equalsIgnoreCase("Send Complaint")) {
-							
+						if(action.equalsIgnoreCase("Send Complaint")) {	
 						}
 						
-						if(action.equalsIgnoreCase("Send Msg")) {
-							
+						if(action.equalsIgnoreCase("Send Msg")) {	
 						}
 							
-						
 					}
 				
 				System.out.println("client: #" + clientCount + " has logged out.");	
@@ -133,7 +136,7 @@ class ClientHandler implements Runnable{
                     client.close();
                 }
                 
-                Db.closeConnection();
+                db.closeConnection();
             }
             catch (IOException e) {
                 e.printStackTrace();
@@ -148,7 +151,7 @@ class ClientHandler implements Runnable{
 	
 	private User authenticateUser(String id, String password) {
 		User user =  null;
-		  try (java.sql.Connection con = Db.getConnection();
+		  try (java.sql.Connection con = db.getConnection();
 			   java.sql.PreparedStatement stmt = con.prepareStatement("SELECT * FROM demo.user_tbl WHERE id = ? and password = ?"))
 		  {
 		        stmt.setString(1, id);
@@ -165,7 +168,6 @@ class ClientHandler implements Runnable{
 		  }
 
 		    if (user != null) {
-		    	clients.put(user.getUsername(), clientCount);
 		        System.out.println("Client #" + clientCount + " - " + user.getUsername() + " authenticated successfully @ " + new Date(System.currentTimeMillis()));
 		    } else {
 		        System.out.println("Client #" + clientCount + " authentication unsuccessful @ " + new Date(System.currentTimeMillis()));
