@@ -10,9 +10,9 @@ public class Db{
 	private BasicDataSource ds =  new BasicDataSource();
 	
 	{
-		ds.setUrl("jdbc:mysql://localhost:3306/demo"); 
-		ds.setUsername("root");
-		ds.setPassword("@7235Ma@@");
+		ds.setUrl(""); 
+		ds.setUsername("");
+		ds.setPassword("");
 		ds.setMaxOpenPreparedStatements(20);
 		ds.setMaxTotal(3);
 		ds.setMinIdle(1);
