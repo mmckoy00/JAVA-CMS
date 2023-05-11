@@ -131,7 +131,7 @@ class ClientHandler implements Runnable{
                 if (out != null) {
                     out.close();
                 }
-                if (in != null) {
+                if(in != null) {
                     in.close();
                     client.close();
                 }

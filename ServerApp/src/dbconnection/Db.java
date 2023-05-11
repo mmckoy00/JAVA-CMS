@@ -5,7 +5,7 @@ import java.sql.SQLException;
 
 import org.apache.commons.dbcp2.BasicDataSource;
 
-public class Db {
+public class Db{
 	
 	private BasicDataSource ds =  new BasicDataSource();
 	
