@@ -10,37 +10,35 @@ import java.net.SocketException;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import dbconnection.Db;
 import entities.User;
 
 public class Server {
 
+	
+	//main 
 	public static void main(String[] args) {
-		
-		//variable declaration 
-		ServerSocket server = null;
-		int clientCount = 0;
-		final int PORT = 1234;
 		 
+		ServerSocket server = null;
+		int clientIdentity = 0;
+		final int PORT = 1234;
 
 		try {
 			server = new ServerSocket(PORT);
 			System.out.println("Server Listening...");
 			
-			while(true) {
-				
-				Socket client = server.accept();
-				clientCount++;
-				System.out.println("Client: #"+clientCount+" is connected.");
-				
-				ClientHandler cli = new ClientHandler(client, clientCount);
+			while(true) 
+			{
+				Socket clientConnection = server.accept();
+				clientIdentity++;
+				System.out.println("Client: #"+ clientIdentity+" is connected.");
+				ClientRequestHandler cli = new ClientRequestHandler(clientConnection, clientIdentity);
 				new Thread(cli).start();
-
 			}
+			
+			
 		} catch (IOException e) {
 			System.out.println("Error starting server: "+e.getMessage());
 		}finally {
@@ -52,75 +50,91 @@ public class Server {
 				System.out.println("Error closing server: "+e.getMessage());
 			}
 		}
+		
+		
+		
 	}
-	
-
 }
 
 
 //handles user requests
-class ClientHandler implements Runnable{
-	Socket client = null;
-	ObjectOutputStream out = null;
-	ObjectInputStream in = null;
-	int clientCount = 0;
-	Db db = new Db();
-	static Set<String> online = new HashSet<String>(); 
+class ClientRequestHandler implements Runnable{
 	
-	public ClientHandler(Socket socket, int clientCount) {
-		this.client = socket;
-		this.clientCount = clientCount;
+	Socket clientConnection = null;
+	ObjectOutputStream serverOutput = null;
+	ObjectInputStream clientInput = null;
+	static Db db = null;
+	User user = null;
+	int  clientIdentity = 0;
+	static Map<Integer, String> activeUsers = new HashMap<Integer, String>();
+	
+	
+	
+	public ClientRequestHandler(Socket socket, int clientCount) {
+		this.clientConnection = socket;
+		clientIdentity = clientCount; 
+		db = new Db();
 	}
 	
 	@Override
 	public void run() {
-		String action = "";
+		String actionRequested = "";
 		try {
-			out = new ObjectOutputStream(client.getOutputStream());
-			in = new ObjectInputStream(client.getInputStream());
-			
+			serverOutput = new ObjectOutputStream(clientConnection.getOutputStream());
+			clientInput = new ObjectInputStream(clientConnection.getInputStream());
 			
 				try {
+				
 					
-					while(!action.equalsIgnoreCase("logout")) {	
+					while(!actionRequested.equalsIgnoreCase("LOGOUT")) 
+					{	
 						
-					    action = (String) in.readObject();
+						actionRequested = (String) clientInput.readObject();
 						
-						if(action.equalsIgnoreCase("login")) {
-							User user = null;
-							String id = (String) in.readObject();
-							String password = (String) in.readObject();
+						if(actionRequested.equalsIgnoreCase("LOGIN")) {
+
+							String id = (String) clientInput.readObject();
+							String password = (String) clientInput.readObject();
+							
 							user = authenticateUser(id, password);
+							
 							if(user!=null) {
-								if(!online.contains(user.getUsername())) {
-									online.add(user.getUsername());
-									out.writeObject(user);
+								int testId= Integer.parseInt(user.getId());
+								if(!activeUsers.containsKey(testId)) {
+									activeUsers.put(clientIdentity, user.getUsername());
+									serverOutput.writeObject(user);
 								}else {
-									out.writeObject("is logged in");	
+									serverOutput.writeObject("is logged in");	
 								}
-						}else {
-							out.writeObject(user);	
-						}
-					  }
-						
-						if(action.equalsIgnoreCase("Edit Profile")) {	
+							}else {
+								serverOutput.writeObject(user);	
+							}
 						}
 						
-						if(action.equalsIgnoreCase("Send Complaint")) {	
+						if(actionRequested.equalsIgnoreCase("Profile")) {	
 						}
 						
-						if(action.equalsIgnoreCase("Send Msg")) {	
+						if(actionRequested.equalsIgnoreCase("Complaint")) {	
+						}
+						
+						if(actionRequested.equalsIgnoreCase("Send Msg")) {	
+							String receiver = (String) clientInput.readObject();
+							String msg = (String) clientInput.readObject();
 						}
 							
 					}
+					
+				activeUsers.remove(clientIdentity);
+				System.out.println("client: #" + clientIdentity + " has logged out.");
 				
-				System.out.println("client: #" + clientCount + " has logged out.");	
 				}catch (EOFException  e1) {
-					System.out.println("Client "+clientCount+" has disconnected.");
+					System.out.println("Client "+clientIdentity+" has disconnected.");
 				}
 				catch (SocketException e1) {
-					// TODO Auto-generated catch block
-					System.out.println("Client: #"+clientCount+" has unexpectedly disconnected.");
+					
+					removeOfflineUser(clientIdentity);
+					System.out.println("Client: #"+clientIdentity+" has unexpectedly disconnected.");
+					
 				}
 					
 				
@@ -128,12 +142,12 @@ class ClientHandler implements Runnable{
 			e.printStackTrace();
 		}finally {
             try {
-                if (out != null) {
-                    out.close();
+                if (serverOutput != null) {
+                    serverOutput.close();
                 }
-                if(in != null) {
-                    in.close();
-                    client.close();
+                if(clientInput != null) {
+                    clientInput.close();
+                    clientConnection.close();
                 }
                 
                 db.closeConnection();
@@ -151,30 +165,41 @@ class ClientHandler implements Runnable{
 	
 	private User authenticateUser(String id, String password) {
 		User user =  null;
-		  try (java.sql.Connection con = db.getConnection();
+		try (java.sql.Connection con = db.getConnection();
 			   java.sql.PreparedStatement stmt = con.prepareStatement("SELECT * FROM demo.user_tbl WHERE id = ? and password = ?"))
 		  {
-		        stmt.setString(1, id);
-		        stmt.setString(2, password);
-		        try (java.sql.ResultSet rs = stmt.executeQuery()) {
-		            if (rs.next()) {
-		                user = new User(id, rs.getString("username"), password, rs.getString("role"));
-		            }
-		         
-		        }
+		      stmt.setString(1, id);
+		      stmt.setString(2, password);
+		      try (java.sql.ResultSet rs = stmt.executeQuery()) {
+		        if (rs.next()) {
+		             user = new User(id, rs.getString("username"), password, rs.getString("role"));
+		          }  
+		      }
 		  } catch (SQLException e) {
-		        System.err.println("Error authenticating user: " + e.getMessage());
-		        e.printStackTrace();
+		      System.err.println("Error authenticating user: " + e.getMessage());
+		      e.printStackTrace();
 		  }
 
 		    if (user != null) {
-		        System.out.println("Client #" + clientCount + " - " + user.getUsername() + " authenticated successfully @ " + new Date(System.currentTimeMillis()));
+		    	int testId = Integer.parseInt(user.getId());
+		    	if(!activeUsers.containsKey(testId)) {
+		    		clientIdentity = Integer.parseInt(user.getId());
+		    		System.out.println("Client: #" + clientIdentity + " - " + user.getUsername() + " authenticated successfully @ " + new Date(System.currentTimeMillis()));
+		    	}else {
+		    		System.out.println("Client: #" + clientIdentity +" Error: is already logged in  @ " + new Date(System.currentTimeMillis()));
+		    	}
 		    } else {
-		        System.out.println("Client #" + clientCount + " authentication unsuccessful @ " + new Date(System.currentTimeMillis()));
+		        System.out.println("Client: #" + clientIdentity+ " authentication unsuccessful @ " + new Date(System.currentTimeMillis()));
 		    }
 		    
 		    return user;
 		
+	}
+	
+	private void removeOfflineUser(int clientCount) {
+		if(user!=null) {
+			activeUsers.remove(clientIdentity);
+		}
 	}
 	
 	private void sendComplaint() {
