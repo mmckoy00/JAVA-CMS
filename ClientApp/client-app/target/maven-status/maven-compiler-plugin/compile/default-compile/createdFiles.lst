@@ -1,0 +1,17 @@
+src\main\java\com\cms\clientapp\entities\User.class
+src\main\java\com\cms\clientapp\entities\Complaint.class
+src\main\java\com\cms\clientapp\frames\Login.class
+src\main\java\com\cms\clientapp\frames\MainFrame$NoDragDesktopManager.class
+src\main\java\com\cms\clientapp\frames\Chat.class
+src\main\java\com\cms\clientapp\frames\MainFrame$1.class
+src\main\java\com\cms\clientapp\frames\Login$2.class
+src\main\java\com\cms\clientapp\frames\MainFrame$4.class
+src\main\java\com\cms\clientapp\frames\Login$1.class
+src\main\java\com\cms\clientapp\frames\MainFrame$3.class
+src\main\java\com\cms\clientapp\frames\MainFrame.class
+src\main\java\com\cms\clientapp\client\Client.class
+src\main\java\com\cms\clientapp\App.class
+src\main\java\com\cms\clientapp\frames\MainFrame$2.class
+src\main\java\com\cms\clientapp\frames\Chat$1.class
+src\main\java\com\cms\clientapp\App$1.class
+src\main\java\com\cms\clientapp\entities\Assign.class
